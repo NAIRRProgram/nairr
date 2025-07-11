@@ -9,8 +9,8 @@ NAIRR Community Learning Resources
 link `Open Food Facts database <https://world.openfoodfacts.org/>`_
 and offers a *simple* and *intuitive* API.
 
-Check out the :doc:`usage` section for further information, including
-how to :ref:`contributing` to the project.
+Check out the :doc:`contributing` section for further information, including
+how to :ref:`submit a pull request` to the project.
 
 .. note::
 
@@ -21,5 +21,6 @@ Contents
 
 .. toctree::
 
+   contributing
    usage
    api
