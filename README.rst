@@ -1,9 +1,4 @@
-Template for the Read the Docs tutorial
+NAIRR Community Learning Resources
 =======================================
 
-This GitHub template includes fictional Python library
-with some basic Sphinx docs.
-
-Read the tutorial here:
-
-https://docs.readthedocs.io/en/stable/tutorial/
+This GitHub contains documentation for the NAIRR community on a variety of AI research tools and best practices.
