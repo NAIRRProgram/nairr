@@ -22,5 +22,7 @@ Contents
 .. toctree::
 
    contributing
+   layla_test
+   layla_test2
    usage
    api
