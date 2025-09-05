@@ -20,7 +20,7 @@
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 
-	"postAttachCommand": "cd ${CODESPACE_VSCODE_FOLDER}/docs; reflex --watch ./source --sequential --exec 'make html'",
+	"postAttachCommand": "cd ./docs && make html && cd ./build/html && python -m http.server & cd ${CODESPACE_VSCODE_FOLDER}/docs && reflex -g './source/*' -- sh -c 'make html'",
     "portsAttributes": {
         "8000": {
             "label": "Preview Site",
