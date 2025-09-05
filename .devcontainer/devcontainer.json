@@ -9,10 +9,10 @@
 	// "features": {},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [8000],
+	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "pip3 install --user -r docs/requirements.txt",
+	"postCreateCommand": "cd ./docs && pip3 install -r requirements.txt && make html && python -m http.server -d ./build/html 8000",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
@@ -20,7 +20,7 @@
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 
-	"postAttachCommand": "cd ./docs && make html && cd ./build/html && python -m http.server & cd ${CODESPACE_VSCODE_FOLDER}/docs && reflex -g './source/*' -- sh -c 'make html'",
+	"postAttachCommand": "cd ./docs && reflex -g './source/*' -- sh -c 'make html'",
     "portsAttributes": {
         "8000": {
             "label": "Preview Site",
