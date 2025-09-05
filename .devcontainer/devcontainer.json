@@ -12,7 +12,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "cd ./docs && pip3 install -r requirements.txt && make html && python -m http.server -d ./build/html 8000",
+	"postCreateCommand": "cd ./docs && pip3 install -r requirements.txt && make html && python -m http.server -d ./build/html 8000 &",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
