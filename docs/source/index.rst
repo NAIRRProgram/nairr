@@ -24,3 +24,4 @@ Contents
    contributing
    usage
    api
+   generalized_resource_estimation
