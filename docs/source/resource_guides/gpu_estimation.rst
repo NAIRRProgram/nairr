@@ -1,36 +1,43 @@
 GPU Estimate
 ============
-Most of the AI models are now scaled run efficiently on multiple GPUs.
-So, estimating GPU memory and compute time is important while 
-submitting a proposal to NAIRR Pilot program to avoid out-of-memory 
-(OOM) errors and unecessary wastage
 
-Esimating GPU Memory for Inference
+Most modern AI models scale efficiently across multiple GPUs. Estimating GPU
+memory and compute time is important when submitting a proposal to the
+NAIRR Pilot program to avoid out-of-memory (OOM) errors and unnecessary waste.
+
+Estimating GPU Memory for Inference
+-----------------------------------
+A quick rule of thumb for fp16 (half precision):
+
+.. math::
+
+   \mathrm{VRAM}_{\text{inference}} \;(\mathrm{GB}) \;\approx\;
+   2 \times \mathrm{params}_{(\mathrm{billions})}
+   \;+\; 1 \times \mathrm{context\ length}_{(\mathrm{thousands})}
+
+Example: for **StableCode** with 3B parameters and 16k context,
+estimated VRAM ≈ 6 GB (weights) + 16 GB (overhead) = **~22 GB** for inference.
+A model like this should fit on an **A100** or **H100** for inference.
+
+**Notes**
+- Assumes fp16; quantization can reduce VRAM further.
+- Actual usage depends on framework.
+
+Estimating GPU Memory for Training
 ----------------------------------
-Estimated GPU VRAM in GB = 2x model parameters (in billions) + 1x 
-context length (in thousands)
+A practical planning heuristic for transformer models with Adam and mixed precision:
 
-For example, for StableCode with 3 billion parameters and 16k 
-context length, we estimate 6GB for model weights + 16GB for 
-overhead, totaling 22 GB estimated to run inference.  
-A model like this should fit on an A100 or H100 for inference.
+.. math::
 
-This estimate assumes fp16 (half-precision). Quantization to lower 
-precisions (8-bit, 4-bit, etc) will reduce memory requirements.
+   \mathrm{VRAM}_{\text{training}} \;(\mathrm{GB}) \;\approx\;
+   40 \times \mathrm{params}_{(\mathrm{billions})}
 
-Estimating GPU Memory Usage for Training
-----------------------------------------
-Estimated GPU VRAM in GB = 40x model parameters (in billions)
+Example: for **LLaMA-3 7B**, VRAM ≈ **~280 GB** to train. This exceeds a single
+H100’s VRAM and typically requires **distributed training** (e.g., ZeRO/FSDP).
 
-For example, for LLaMA-3 with 7 billion parameters, we estimate 
-minimum 280GB to train it.  This exceeds the VRAM of even a single 
-H100 accelerator, requiring distributed training.  
-See HOWTO: PyTorch Fully Sharded Data Parallel (FSDP) for more details.
-
-To note: The training estimate assumes transformer-based 
-architecture with Adam optimizer using mixed-precision 
-(32bit and 16bit weights used) and is extrapolated from results 
-here: Microsoft Deepspeed.
-
-Activation checkpointing can reduce the memory demands, at the cost 
-of increasing runtime.
+**Assumptions & Tips**
+- Assumes transformer architecture, Adam optimizer, and mixed precision (16/32-bit).
+- Heuristic extrapolated from widely reported results (e.g., DeepSpeed).
+- **Activation checkpointing** reduces VRAM at the cost of extra compute time.
+- For multi-GPU training, consider **PyTorch FSDP/ZeRO** (see HOWTO: Fully
+  Sharded Data Parallel (FSDP)) to shard model states across devices.
