@@ -24,3 +24,4 @@ Contents
    contributing
    usage
    api
+   resource_estimation
