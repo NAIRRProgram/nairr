@@ -32,8 +32,15 @@ A practical planning heuristic for transformer models with Adam and mixed precis
    \mathrm{VRAM}_{\text{training}} \;(\mathrm{GB}) \;\approx\;
    40 \times \mathrm{params}_{(\mathrm{billions})}
 
-Example: for **LLaMA-3 7B**, VRAM ≈ **~280 GB** to train. This exceeds a single
-H100’s VRAM and typically requires **distributed training** (e.g., ZeRO/FSDP).
+
+Worked GPU Fine-Tune (LoRA)
+---------------------------------------
+**Pilot:** A100-40GB, 2k context, global batch 256, throughput ≈ **55k tokens/s** (1–2 min run).  
+**Task:** 50k samples × 2k tokens × 2 epochs = **200M tokens**.  
+**Runtime (1× GPU):** 200e6 / (55e3 × 3600) ≈ **~1 h/epoch** ⇒ **~2 h** total.  
+Add 30% buffer ⇒ **~2.6 GPU-hours**.  
+If you will run **10 variants**, total **~26 GPU-hours**.  
+VRAM fits (see :doc:`GPU Estimate <gpu_estimation>`); monitor with ``nvidia-smi`` and adjust batch size as needed.
 
 **Assumptions & Tips**
 - Assumes transformer architecture, Adam optimizer, and mixed precision (16/32-bit).
