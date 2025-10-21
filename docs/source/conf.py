@@ -2,9 +2,9 @@
 
 # -- Project information
 
-project = 'Lumache'
-copyright = '2021, Graziella'
-author = 'Graziella'
+project = 'NAIRR Pilot Generalized Resource Estimation'
+copyright = '2025, Kevin Bhimani, Abhin Suresh, Evan Jaffe'
+author = 'Kevin Bhimani, Abhin Suresh, Evan Jaffe'
 
 release = '0.1'
 version = '0.1.0'
