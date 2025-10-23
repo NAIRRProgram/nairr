@@ -18,16 +18,9 @@ Learning Outcomes
 -----------------
 * Translate a research task into CPU-hours, GPU-hours, node-hours,
   RAM, and scratch & long-term storage.
-* Produce an estimate for scaling your code on High Performance Computing Systems
+* Produce an estimate for scaling your code on High Performance Computing Systems.
 * Generate metrics that can be used for NAIRR pilot project.
 
-NAIRR
------
-The **National Artificial Intelligence Research Resource (NAIRR) Pilot** program connects U.S. researchers and educators to computational,
-data, and training resources needed to advance AI research. The program
-leverages shared federal and private compute infrastructure to bridge
-the gap between researchers/educators and AI resources. More information
-is available at the `NAIRR Pilot program page <https://nairrpilot.org/about>`_.
 
 Information about currently available resources for **researchers** is at
 `NAIRR Pilot: Resource Requests <https://nairrpilot.org/opportunities/allocations>`_,
@@ -48,11 +41,11 @@ To get started, the following steps can be useful:
 
 3. **Note throughput carefully** to understand your program’s computational behavior.
 
-4. **Decide concurrency** — how many jobs will run in parallel.
+4. **Decide concurrency** how many jobs will run in parallel.
 
-5. **Convert to GPU-hours, core-hours, or node-hours**, then map to SUs for your target resource.
+5. **Convert to GPU-hours, core-hours, or node-hours**, using the table below.
 
-6. **Add a 20–30% overhead** for retries, queue variability, and profiling.
+6. **Add an overhead** for retries, queue variability, and profiling.
 
 7. **Map to SUs** resource estimates based on your resource results.
 
@@ -100,14 +93,14 @@ The SUs scale quickly. To get an estimate for the SU requirement, consider using
 
      <div class="row">
        <label><b>Number of runs</b></label>
-       <input id="runs" type="range" min="1" max="500" value="10" oninput="W.upd()">
-       <input id="runs_n" class="num" type="number" min="1" max="500" value="10" oninput="W.sync('runs')">
+       <input id="runs" type="range" min="1" max="10000" value="500" oninput="W.upd()">
+       <input id="runs_n" class="num" type="number" min="1" max="500" value="1000" oninput="W.sync('runs')">
      </div>
 
      <div class="row">
        <label><b>Hours per run</b></label>
-       <input id="hours" type="range" min="0.1" max="200" step="0.1" value="2" oninput="W.upd()">
-       <input id="hours_n" class="num" type="number" min="0.1" step="0.1" value="2" oninput="W.sync('hours')">
+       <input id="hours" type="range" min="0.1" max="240" step="0.1" value="10" oninput="W.upd()">
+       <input id="hours_n" class="num" type="number" min="0.1" step="0.1" value="10" oninput="W.sync('hours')">
      </div>
 
      <div class="row">
@@ -124,8 +117,8 @@ The SUs scale quickly. To get an estimate for the SU requirement, consider using
 
      <div class="row">
        <label><b>Overhead (%)</b> <span class="small"></span></label>
-       <input id="buffer" type="range" min="0" max="100" value="30" oninput="W.upd()">
-       <input id="buffer_n" class="num" type="number" min="0" max="100" value="30" oninput="W.sync('buffer')">
+       <input id="buffer" type="range" min="0" max="100" value="20" oninput="W.upd()">
+       <input id="buffer_n" class="num" type="number" min="0" max="100" value="20" oninput="W.sync('buffer')">
      </div>
 
      <div class="row">
