@@ -2,12 +2,13 @@
 
 # -- Project information
 
-project = 'Lumache'
-copyright = '2021, Graziella'
-author = 'Graziella'
+project = 'NAIRR Community Learning Resources'
+copyright = '2025, NAIRR Contributors'
+author = 'Kevin Bhimani (University of Delaware), Abhin Suresh (University of Delaware); Evan Jaffe (Ohio Supercomputing Center)'
 
 release = '0.1'
 version = '0.1.0'
+
 
 # -- General configuration
 

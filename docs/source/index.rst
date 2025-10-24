@@ -1,26 +1,23 @@
 NAIRR Community Learning Resources
 ===================================
 
-**NAIRR Community Learning Resources** is a place to find documentation on best practices for artificial intelligence research and education for NAIRR community members.
+**NAIRR Community Learning Resources** provides documentation on best practices for AI research and education for the NAIRR community.
 
-
-
-
-link `Open Food Facts database <https://world.openfoodfacts.org/>`_
-and offers a *simple* and *intuitive* API.
-
-Check out the :doc:`contributing` section for further information, including
-how to :ref:`submit a pull request` to the project.
-
-.. note::
-
-   This project is under active development.
+NAIRR
+-----
+The **National Artificial Intelligence Research Resource (NAIRR) Pilot** program connects U.S. researchers and educators to computational,
+data, and training resources needed to advance AI research. The program
+leverages shared federal and private compute infrastructure to bridge
+the gap between researchers/educators and AI resources. More information
+is available at the `NAIRR Pilot program page <https://nairrpilot.org/about>`_.
 
 Contents
 --------
 
 .. toctree::
+   :maxdepth: 1
 
-   contributing
-   usage
-   api
+   resource_guides/resource_estimation
+   
+.. note::
+   This project is under active development.
