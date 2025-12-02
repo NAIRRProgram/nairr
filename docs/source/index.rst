@@ -18,6 +18,7 @@ Contents
    :maxdepth: 1
 
    resource_guides/resource_estimation
+   mynewdoc
    
 .. note::
    This project is under active development.
