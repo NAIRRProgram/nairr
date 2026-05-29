@@ -1,20 +1,22 @@
+============
 CPU Estimate
 ============
 
-High-Level Summary of Steps
+When This Applies
+-----------------
+Use this guide when your workload runs primarily on CPUs. Typical cases include data preprocessing, classical machine learning, simulations that do not use GPU kernels, and post processing of results. If you are training or fine-tuning deep learning models, see :doc:`GPU Estimate <gpu_estimation>`. Most realistic workflows mix both.
+
+High Level Summary of Steps
 ---------------------------
 - Run a toy example
-- Run a scaled-up (but still modest) example
-- Determine scaling modifiers (e.g., problem size, number of cores)
+- Run a scaled up but still modest example
+- Determine scaling modifiers such as problem size and number of cores
 
 Baseline Run
 ------------
 Example Python Code
 ~~~~~~~~~~~~~~~~~~~
-The first step is to run a **baseline** job to estimate resource
-usage, typically with a small problem size that completes in a few
-minutes. For example, if your program is a Python script ``mult.py``
-that multiplies two matrices:
+The first step is to run a **baseline** job to estimate resource usage, typically with a small problem size that completes in a few minutes. For example, if your program is a Python script ``mult.py`` that multiplies two matrices:
 
 .. code-block:: python
    :linenos:
@@ -29,20 +31,16 @@ that multiplies two matrices:
 
 Extracting Information From Shell Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You can use this shell command to measure wall time, CPU time, and
-peak RAM for your Python program:
+You can use this shell command to measure wall time, CPU time, and peak RAM for your Python program:
 
 .. code-block:: bash
 
    /usr/bin/time -v python mult.py > program_out.log 2> log.out
 
-The file ``program_out.log`` captures your program's printed output,
-while ``log.out`` records resource usage metrics. The relevant parts
-of ``log.out`` while running the job on an Intel i7-1185G7 with the
-number of *threads* set to **1**:
+The file ``program_out.log`` captures your program printed output, while ``log.out`` records resource usage metrics. The relevant parts of ``log.out`` while running the job on an Intel i7-1185G7 with the number of *threads* set to **1**:
 
 .. code-block:: text
-    :linenos:
+   :linenos:
 
    Command being timed: "python mult.py"
    User time (seconds): 27.52
@@ -54,7 +52,7 @@ number of *threads* set to **1**:
 and with the number of *threads* set to **4**:
 
 .. code-block:: text
-    :linenos:
+   :linenos:
 
    Command being timed: "python mult.py"
    User time (seconds): 59.21
@@ -65,19 +63,12 @@ and with the number of *threads* set to **4**:
 
 Here, the output parameters correspond to:
 
-- **Wall clock time:** elapsed real-world time for running your code.
-- **User time:** time the CPU spent executing your calculation.
-- **System time:** time the kernel spent on I/O and other system calls on behalf of your process.
-- **Peak RAM:** the maximum amount of RAM consumed by your program. This
-  typically sets the lower bound on the available RAM for the node
-  you request.
-- **Percent of CPU:** the ratio of total CPU time (user + system) to wall
-  clock time, expressed as a percentage. A value above 100% indicates
-  that multiple cores were active simultaneously. For example, 365%
-  means roughly 3.65 cores were busy on average.
-- If outputs are saved in the ``output_folder``, then the command
-  ``du -sh /path-to-output/output_folder`` after running the program
-  gives you the estimated storage requirements.
+- **Wall clock time** is the elapsed real-world time for running your code.
+- **User time** is the time the CPU spent executing your calculation.
+- **System time** is the time the kernel spent on I/O and other system calls on behalf of your process.
+- **Peak RAM** is the maximum amount of RAM consumed by your program. This typically sets the lower bound on the available RAM for the node you request.
+- **Percent of CPU** is the ratio of total CPU time, meaning user plus system, to wall clock time, expressed as a percentage. A value above 100 percent indicates that multiple cores were active simultaneously. For example, 365 percent means roughly 3.65 cores were busy on average.
+- If outputs are saved in the ``output_folder``, then the command ``du -sh /path-to-output/output_folder`` after running the program gives you the estimated storage requirements.
 
 +------------+---------------+--------------+---------------+--------------------+
 | Array Size | Cores/Threads | Wall time(s) | Peak RAM (GB) | Percent of CPU (%) |
@@ -91,18 +82,11 @@ Here, the output parameters correspond to:
 
 .. note::
 
-    Regardless of CPU utilization, your job will consume CPU core-hours
-    based on the number of cores you requested. It is your responsibility
-    to maximize the efficiency of the program to avoid wasting allocated
-    resources.
+    Regardless of CPU utilization, your job will consume CPU core-hours based on the number of cores you requested. It is your responsibility to maximize the efficiency of the program to avoid wasting allocated resources.
 
 Example Slurm Script
 ~~~~~~~~~~~~~~~~~~~~
-If you want to run the command on a compute node (sometimes a specific
-compute node) instead of the login node, you can either request an
-**interactive** session or submit a **batch job**. You might also
-need to choose your workgroup (``workgroup -g test``) before requesting
-a compute node.
+If you want to run the command on a compute node, sometimes a specific compute node, instead of the login node, you can either request an **interactive** session or submit a **batch job**. You might also need to choose your workgroup with ``workgroup -g test`` before requesting a compute node.
 
 Interactive Session
 """""""""""""""""""
@@ -131,34 +115,26 @@ Batch Job Submission
 
     /usr/bin/time -v python mult.py > program_out.log 2> log.out
 
-After saving the above file as ``submit.slurm``, you can submit the batch
-job using the command ``sbatch submit.slurm``.
+After saving the above file as ``submit.slurm``, you can submit the batch job using the command ``sbatch submit.slurm``.
 
 
 Limiting Threads
 ----------------
-To get a consistent baseline on a single core, restrict NumPy's
-internal threading using:
+To get a consistent baseline on a single core, restrict NumPy internal threading using:
 
 .. code-block:: bash
 
    export OMP_NUM_THREADS=1
    export MKL_NUM_THREADS=1
 
-Set the environment variables that apply to your NumPy's BLAS installation.
-A standard NumPy installation comes with OpenBLAS, unless it is configured
-to use MKL. You can check the NumPy linkage by executing the command:
+Set the environment variables that apply to your NumPy BLAS installation. A standard NumPy installation comes with OpenBLAS, unless it is configured to use MKL. You can check the NumPy linkage by executing:
 
 .. code-block:: python
 
     import numpy as np
     np.show_config()
 
-You can also verify the number of threads being used with the command
-``htop`` in your shell. Once you have your baseline run without any errors,
-you can scale up by varying the associated environment variable (in
-the above case of Python matrix multiplication) or by varying the number of
-processes in an MPI run for distributed computation:
+You can also verify the number of threads being used with the command ``htop`` in your shell. Once you have your baseline run without any errors, you can scale up by varying the associated environment variable, as in the Python matrix multiplication example above, or by varying the number of processes in an MPI run for distributed computation:
 
 .. code-block:: shell
 
@@ -166,46 +142,37 @@ processes in an MPI run for distributed computation:
 
 .. note::
 
-    For the Python matrix multiplication example above, it
-    might be faster to run on a single thread compared to multiple
-    threads unless you have a large enough matrix.
+    For the Python matrix multiplication example above, it might be faster to run on a single thread compared to multiple threads unless you have a large enough matrix.
 
 .. note::
 
-    When you have both MPI and multithreading, it is a good idea to
-    ensure that the number of MPI processes × the number of threads
-    does not exceed the number of available or requested CPU cores.
+    When you have both MPI and multithreading, it is a good idea to ensure that the number of MPI processes times the number of threads does not exceed the number of available or requested CPU cores.
 
 Limitations of ``/usr/bin/time``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``/usr/bin/time`` utility provides a useful snapshot but does not capture
-everything you may need for a complete resource estimate:
+The ``/usr/bin/time`` utility provides a useful snapshot but does not capture everything you may need for a complete resource estimate:
 
 - Disk usage growth as a function of time
 - RAM consumption change as a function of time
-- GPU usage (see :doc:`GPU Estimate <gpu_estimation>`)
+- GPU usage, covered in :doc:`GPU Estimate <gpu_estimation>`
 - Concurrent process and thread breakdown
 
-For time-series profiling of memory or disk, consider tools such as
-``psrecord``, ``memory_profiler``, or custom logging within your code.
+For time series profiling of memory or disk, consider tools such as ``psrecord``, ``memory_profiler``, or custom logging within your code.
 
 
-Worked Example A — CPU Data Prep
---------------------------------
-**Pilot:** 10k images in 12 min on 8 threads; peak RAM = 6 GB.
+Worked Example A: CPU Data Prep
+-------------------------------
+**Pilot:** 10k images in 12 minutes on 8 threads; peak RAM = 6 GB.
 
-**Full data:** 10M images ⇒ scale factor of 1,000.
+**Full data:** 10M images, giving a scale factor of 1,000.
 
-**Core-hours:** 12 min × 1,000 = 12,000 min of wall time on 8 cores
-⇒ 12,000 min ÷ 60 min/hr × 8 cores = **1,600 core-hours**.
+**Core-hours:** 12 minutes × 1,000 = 12,000 minutes of wall time on 8 cores, which is 12,000 minutes ÷ 60 minutes per hour × 8 cores = **1,600 core-hours**.
 
-Running 10 jobs in parallel reduces calendar time but does not change
-the total: still **1,600 core-hours**.
+Running 10 jobs in parallel reduces calendar time but does not change the total: still **1,600 core-hours**.
 
-Add 20% buffer ⇒ **1,920 core-hours**.
+Add a 20 percent buffer, giving **1,920 core-hours**.
 
-**Storage:** inputs 4 TB + outputs 6 TB + logs and artifacts 1 TB = **11 TB**;
-retain 2 months ⇒ **22 TB-months**.
+**Storage:** inputs 4 TB plus outputs 6 TB plus logs and artifacts 1 TB equals **11 TB**; retain for 2 months for a total of **22 TB-months**.
 
 Recommended Reading
 -------------------

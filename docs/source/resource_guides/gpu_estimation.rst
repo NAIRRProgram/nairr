@@ -1,34 +1,23 @@
+============
 GPU Estimate
 ============
 
 Overview
 --------
-Most modern AI models scale efficiently across multiple GPUs. Estimating GPU
-memory (VRAM) and compute time is critical for NAIRR proposals to avoid
-out-of-memory (OOM) errors and unnecessary resource waste.
+Most modern AI models scale efficiently across multiple GPUs. Estimating GPU memory, also called VRAM, and compute time is critical for NAIRR proposals to avoid out of memory errors and unnecessary resource waste. This guide separates two distinct cases: **inference**, where you only run a trained model forward, and **training or fine-tuning**, where you also update model weights. The memory profiles for these two cases differ by an order of magnitude. 
 
 Estimating GPU Memory for Inference
 -----------------------------------
-In an autoregressive transformer, each new token attends to all previous tokens.
-To avoid recomputing attention for previous tokens at each step,
-the model stores the **Keys** and **Values** for every layer and attention head.
-This stored data is called the **KV cache**. Caching drastically reduces
-computational time from :math:`O(T^2)` to :math:`O(T)` at the cost of **VRAM**.
+In an autoregressive transformer, each new token attends to all previous tokens. To avoid recomputing attention for previous tokens at each step, the model stores the **Keys** and **Values** for every layer and attention head. This stored data is called the **KV cache**. Caching drastically reduces computational time from :math:`O(T^2)` to :math:`O(T)` at the cost of **VRAM**.
 
 .. math::
     \textrm{KV-cache} = 2 \times L \times H \times d \times T \times b,
 
-where the factor 2 comes from storing both keys and values, :math:`L` is the number of
-transformer layers, :math:`H` is the number of attention heads, :math:`d` is the dimension of each
-head, :math:`T` is the context length, and :math:`b` is bytes per element (FP16 = 2).
+where the factor 2 comes from storing both keys and values, :math:`L` is the number of transformer layers, :math:`H` is the number of attention heads, :math:`d` is the dimension of each head, :math:`T` is the context length, and :math:`b` is bytes per element with FP16 = 2.
 
-With typical values of these parameters :math:`(L=32, H=32, d=128, b=2)`,
-the **VRAM** from the KV cache is over **0.5 GB** for a context length of one thousand tokens.
-For the purpose of resource estimation, we can treat **1 GB per thousand tokens**
-(equivalently, 0.001 GB per token) as a **conservative upper bound**.
+With typical values of these parameters, :math:`L=32`, :math:`H=32`, :math:`d=128`, and :math:`b=2`, the **VRAM** from the KV cache is over **0.5 GB** for a context length of one thousand tokens. For the purpose of resource estimation, we can treat **1 GB per thousand tokens**, equivalently 0.001 GB per token, as a **conservative upper bound**.
 
-The runtime overhead — comprising the *CUDA context*, *cuBLAS/cuDNN workspaces*, and
-*kernel launch buffers* — can vary from **300 MB** to **1 GB** per process.
+The runtime overhead, comprising the *CUDA context*, *cuBLAS and cuDNN workspaces*, and *kernel launch buffers*, can vary from **300 MB** to **1 GB** per process.
 
 A quick rule of thumb for estimating GPU VRAM in GB:
 
@@ -41,18 +30,13 @@ A quick rule of thumb for estimating GPU VRAM in GB:
    &+\;\underbrace{0.15 \times (\text{weight VRAM} + \text{KV-cache VRAM}) + 1}_{\text{runtime overhead}}
    \end{align}
 
-where **weight VRAM** is the first term (:math:`2 \times \mathrm{params}_\mathrm{B}`) and
-**KV-cache VRAM** is the second term (:math:`1 \times \mathrm{context}_\mathrm{k}`).
-The overhead is modelled as 15% of the combined weight and cache footprint plus a 1 GB constant
-for the CUDA context and workspace allocations.
+where **weight VRAM** is the first term :math:`2 \times \mathrm{params}_\mathrm{B}` and **KV-cache VRAM** is the second term :math:`1 \times \mathrm{context}_\mathrm{k}`. The overhead is modeled as 15 percent of the combined weight and cache footprint plus a 1 GB constant for the CUDA context and workspace allocations.
 
-**Example.** For **StableCode** with 3B parameters and 16k context,
-VRAM ≈ 6 GB (weights) + 16 GB (KV-cache) + (3.3 + 1) GB (overhead) = **~26 GB** total. This fits on an
-**A100**, **H100**, or 32 GB **V100** for inference.
+**Example.** For **StableCode** with 3B parameters and 16k context, VRAM is approximately 6 GB for weights plus 16 GB for KV cache plus 4.3 GB of overhead, totaling about **26 GB**. This fits on an **A100**, **H100**, or 32 GB **V100** for inference.
 
 .. note::
-    - For inference, context length is often the major VRAM bottleneck — consider dropping old tokens or using a sliding window.
-    - Actual usage depends on the framework, runtime, and settings (e.g., CUDA graphs, KV-cache eviction policy, preallocation).
+    - For inference, context length is often the major VRAM bottleneck. Consider dropping old tokens or using a sliding window.
+    - Actual usage depends on the framework, runtime, and settings such as CUDA graphs, KV cache eviction policy, and preallocation.
 
 .. raw:: html
 
@@ -135,9 +119,7 @@ VRAM ≈ 6 GB (weights) + 16 GB (KV-cache) + (3.3 + 1) GB (overhead) = **~26 GB*
 
 A Small Code to Test Memory Consumption and Performance
 --------------------------------------------------------
-Install the relevant packages (PyTorch, Transformers, etc.) and
-run on a machine with GPU access. You can also watch GPU usage with
-``watch -n 0.5 nvidia-smi``.
+Install the relevant packages such as PyTorch and Transformers, and run on a machine with GPU access. You can also watch GPU usage with ``watch -n 0.5 nvidia-smi``.
 
 .. code-block:: python
 
@@ -187,15 +169,9 @@ run on a machine with GPU access. You can also watch GPU usage with
     print(f"Peak allocated: {peak_alloc:.2f} GB")
     print(f"Peak reserved:  {peak_reserved:.2f} GB")
 
-Where **Peak allocated** is the actual memory used by tensors — a
-good approximation of real usage. **Peak reserved** is the memory
-reserved by PyTorch's caching allocator, which may be higher because
-the allocator keeps freed blocks for reuse. For **small models**, GPU memory is often dominated
-by **fixed overhead** (CUDA context, libraries) rather than the model itself, which is why
-``nvidia-smi`` may report higher VRAM usage than ``peak_allocated`` alone.
+Here, **Peak allocated** is the actual memory used by tensors, which is a good approximation of real usage. **Peak reserved** is the memory reserved by the PyTorch caching allocator, which may be higher because the allocator keeps freed blocks for reuse. For **small models**, GPU memory is often dominated by **fixed overhead** such as CUDA context and libraries rather than the model itself, which is why ``nvidia-smi`` may report higher VRAM usage than ``peak_allocated`` alone.
 
-On a machine with an NVIDIA GeForce 1050 Ti with Max-Q Design, the code
-produced:
+On a machine with an NVIDIA GeForce 1050 Ti with Max-Q Design, the code produced:
 
 .. code-block:: text
 
@@ -216,38 +192,32 @@ A practical planning heuristic for transformer models trained with Adam and mixe
    \mathrm{VRAM}_{\text{training}} \;(\mathrm{GB}) \;\approx\;
    40 \times \mathrm{params}_{(\mathrm{billions})}
 
-**Breakdown of the 40× factor.** For a model with *P* billion parameters trained in
-mixed precision with the Adam optimizer, the major VRAM consumers are:
+**Breakdown of the 40 times factor.** For a model with *P* billion parameters trained in mixed precision with the Adam optimizer, the major VRAM consumers are:
 
-- **FP16 weights + FP32 master copy:** ~6 GB per billion params (2 + 4 bytes/param)
-- **Gradients (FP16):** ~2 GB per billion params
-- **Adam optimizer states (FP32 momentum + variance):** ~8 GB per billion params
-- **Activations** (with typical gradient checkpointing): ~20–24 GB per billion params, depending on batch size and sequence length
+- **FP16 weights plus FP32 master copy:** roughly 6 GB per billion parameters, accounting for 2 plus 4 bytes per parameter
+- **Gradients in FP16:** roughly 2 GB per billion parameters
+- **Adam optimizer states** with FP32 momentum and variance: roughly 8 GB per billion parameters
+- **Activations** with typical gradient checkpointing: roughly 20 to 24 GB per billion parameters, depending on batch size and sequence length
 
-Together these total roughly 36–40 GB per billion parameters. The 40× figure is a
-conservative upper bound that absorbs minor sources like temporary buffers and fragmentation.
+Together these total roughly 36 to 40 GB per billion parameters. The 40 times figure is a conservative upper bound that absorbs minor sources like temporary buffers and fragmentation.
 
-**Example.** A 7B parameter model requires approximately 7 × 40 = **280 GB** of VRAM for training,
-which would need at least 4× A100 80 GB GPUs with model parallelism, or 8× A100 40 GB GPUs.
+**Example.** A 7B parameter model requires approximately 7 × 40 = **280 GB** of VRAM for training, which would need at least four A100 80 GB GPUs with model parallelism, or eight A100 40 GB GPUs.
 
 .. note::
-    - Activation checkpointing (trading compute for memory) can reduce the activations
-      component significantly at the cost of ~30% more compute time.
-    - Techniques like ZeRO (DeepSpeed), FSDP (PyTorch), or tensor parallelism can distribute
-      optimizer states and gradients across GPUs, reducing per-GPU VRAM.
-    - The 40× heuristic assumes a reasonable batch size. Very large batch sizes will
-      increase activation memory beyond this estimate.
+    - Activation checkpointing trades compute for memory and can reduce the activations component significantly at the cost of about 30 percent more compute time.
+    - Techniques like ZeRO in DeepSpeed, FSDP in PyTorch, or tensor parallelism can distribute optimizer states and gradients across GPUs, reducing per GPU VRAM.
+    - The 40 times heuristic assumes a reasonable batch size. Very large batch sizes will increase activation memory beyond this estimate.
 
 
 Minimal Monitoring
 ------------------
-**Peak VRAM (shell):**
+**Peak VRAM from the shell:**
 
 .. code-block:: bash
 
    nvidia-smi --query-gpu=memory.total,memory.used,gpu_name --format=csv -l 2
 
-**PyTorch (in-code snapshot):**
+**PyTorch in code snapshot:**
 
 .. code-block:: python
 
@@ -262,8 +232,7 @@ Profiling Tools
 ---------------
 NVIDIA-SMI Usage
 ~~~~~~~~~~~~~~~~
-``nvidia-smi`` is available on GPU-enabled nodes and reports per-GPU and per-process
-memory and utilization. It is the fastest way to sanity-check **VRAM usage** and **GPU load**.
+``nvidia-smi`` is available on GPU enabled nodes and reports per GPU and per process memory and utilization. It is the fastest way to sanity check **VRAM usage** and **GPU load**.
 
 **Basic usage**
 
@@ -294,17 +263,17 @@ memory and utilization. It is the fastest way to sanity-check **VRAM usage** and
 
 **What to watch:**
 
-- **Memory-Usage** → used vs. total VRAM; OOM risk if approaching 100%.
-- **GPU-Util** → percent of time kernels keep the GPU busy.
-- **Processes table** → which PID and program is consuming VRAM.
+- **Memory-Usage** shows used versus total VRAM; there is OOM risk if approaching 100 percent.
+- **GPU-Util** shows the percent of time kernels keep the GPU busy.
+- **Processes table** shows which PID and program is consuming VRAM.
 
-**Watch continuously (refresh every 0.5 s)**
+**Watch continuously, refreshing every 0.5 seconds:**
 
 .. code-block:: bash
 
    watch -n 0.5 nvidia-smi
 
-**Log to CSV over time (for later plotting)**
+**Log to CSV over time for later plotting:**
 
 .. code-block:: bash
 
@@ -312,25 +281,25 @@ memory and utilization. It is the fastest way to sanity-check **VRAM usage** and
     --format=csv,nounits -l 1 > gpu_usage.csv
 
 
-**Per-process view (memory by PID)**
+**Per process view, showing memory by PID:**
 
 .. code-block:: bash
 
     timeout 60s nvidia-smi --query-compute-apps=pid,process_name,used_memory \
     --format=csv,nounits -l 1 > gpu_usage.csv
 
-**Find the right node (SLURM clusters)**
+**Find the right node on SLURM clusters:**
 
 .. code-block:: bash
 
    # Which node is my job on?
    squeue -u $USER
-   # SSH to that node to run nvidia-smi there (if your site allows):
+   # SSH to that node to run nvidia-smi there if your site allows:
    ssh <node-name>
 
 Tips
 ~~~~
-- Sample **after warm-up** to capture steady-state VRAM (JIT compilation and CUDA graphs can cause initial spikes).
+- Sample **after warm up** to capture steady state VRAM. JIT compilation and CUDA graphs can cause initial spikes.
 - Combine with ``/usr/bin/time -v`` to capture **CPU and RAM** alongside GPU stats.
 - If VRAM is near capacity, try a **smaller batch or sequence length**, **activation checkpointing**, or **quantization**.
 
